@@ -8,7 +8,7 @@ project(
 include(CTest)
 enable_testing()
 
-option(WITH_ROS "Enable ROS communication" OFF)
+option(WITH_ROS "Enable ROS communication" ON)
 
 # Find mc_rtc if we are not building inside mc_rtc itself
 if(NOT TARGET mc_rtc::mc_control)
@@ -24,10 +24,15 @@ if(WITH_ROS)
 endif()
 
 add_library(mc_camera SHARED src/CameraDevice.cpp src/CameraDevice.h)
-target_compile_definitions(mc_camera PRIVATE -DWITH_ROS=${WITH_ROS})
-target_link_libraries(
-  mc_camera PUBLIC ${OpenCV_LIBRARIES} mc_rtc::mc_rbdyn cv_bridge::cv_bridge
-                   image_transport::image_transport "${sensor_msgs_TARGETS}")
+target_link_libraries(mc_camera PUBLIC ${OpenCV_LIBRARIES} mc_rtc::mc_rbdyn)
+
+if(WITH_ROS)
+  target_compile_definitions(mc_camera PRIVATE WITH_ROS)
+  target_link_libraries(
+    mc_camera PUBLIC cv_bridge::cv_bridge image_transport::image_transport
+                     "${sensor_msgs_TARGETS}")
+
+endif()
 
 set(MC_CAMERA_EXPORT_NAME mc_camera)
 install(
@@ -82,8 +87,12 @@ set(plugin_HDR src/CameraPlugin.h)
 
 # The add_plugin macro is provided by mc_rtc
 add_plugin(CameraPlugin "${plugin_SRC}" "${plugin_HDR}")
-target_compile_definitions(CameraPlugin PRIVATE -DWITH_ROS=${WITH_ROS})
 target_link_libraries(CameraPlugin PUBLIC mc_camera)
+
+if(WITH_ROS)
+  target_compile_definitions(CameraPlugin PRIVATE WITH_ROS)
+
+endif()
 
 if(BUILD_TESTING)
   add_subdirectory(tests)

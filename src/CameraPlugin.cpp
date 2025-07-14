@@ -1,7 +1,6 @@
 #include "CameraPlugin.h"
 
 #include <mc_control/GlobalPluginMacros.h>
-#include <rclcpp/executors.hpp>
 
 namespace mc_plugin
 {

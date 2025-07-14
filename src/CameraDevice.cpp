@@ -1,10 +1,8 @@
 #include "CameraDevice.h"
-#include <mc_rtc/gui/Button.h>
 #include <mc_rtc/gui/Checkbox.h>
 #include <mc_rtc/logging.h>
 #include <chrono>
 #include <functional>
-#include <image_transport/image_transport.hpp>
 #include <mutex>
 #include <opencv2/highgui.hpp>
 #include <opencv2/videoio.hpp>

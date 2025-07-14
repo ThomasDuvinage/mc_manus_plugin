@@ -8,14 +8,14 @@
 #include <mc_rtc/Configuration.h>
 #include "CameraDevice.h"
 
-#include "image_transport/image_transport.hpp"
 #include "opencv2/highgui/highgui.hpp"
-#include <cv_bridge/cv_bridge.h>
-#include <image_transport/subscriber.hpp>
 #include <opencv2/videoio.hpp>
-#include <rclcpp/executor.hpp>
-#include <rclcpp/executors.hpp>
-#include <rclcpp/rclcpp.hpp>
+
+#ifdef WITH_ROS
+#  include <cv_bridge/cv_bridge.h>
+#  include <rclcpp/executor.hpp>
+#  include <rclcpp/rclcpp.hpp>
+#endif
 
 namespace mc_plugin
 {

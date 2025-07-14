@@ -9,8 +9,8 @@
 #include <thread>
 
 #ifdef WITH_ROS
-#  include "image_transport/image_transport.hpp"
 #  include <cv_bridge/cv_bridge.h>
+#  include <image_transport/image_transport.hpp>
 #  include <image_transport/subscriber.hpp>
 #  include <rclcpp/executor.hpp>
 #  include <rclcpp/rclcpp.hpp>
