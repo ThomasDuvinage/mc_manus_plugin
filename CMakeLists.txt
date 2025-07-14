@@ -72,10 +72,8 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/mc_cameraConfig.cmake"
               "${CMAKE_CURRENT_BINARY_DIR}/mc_cameraConfigVersion.cmake"
         DESTINATION lib/cmake/mc_camera)
 
-# Configure and install the plugin configuration
-configure_file(etc/CameraPlugin.in.yaml
-               "${CMAKE_CURRENT_BINARY_DIR}/etc/CameraPlugin.yaml")
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/etc/CameraPlugin.yaml"
+# Install the plugin configuration
+install(FILES etc/CameraPlugin.yaml
         DESTINATION "${MC_PLUGINS_RUNTIME_INSTALL_PREFIX}/etc")
 
 set(plugin_SRC src/CameraPlugin.cpp)
