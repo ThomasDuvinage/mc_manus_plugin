@@ -60,7 +60,6 @@ CameraDevice::CameraDevice(const CameraDevice & cd) : CameraDevice(cd.name(), cd
   stop_capture_ = false;
   is_display_ = false;
   startCaptureThread();
-  mc_rtc::log::info("Copy constructor for {} has been called", name());
 }
 
 CameraDevice::CameraDevice(const std::string & name,
@@ -111,14 +110,11 @@ void CameraDevice::startCaptureThread()
   capture_thread_ = std::thread(
       [this]
       {
-        mc_rtc::log::warning("Entering the capture thread for {}", name());
         while(!stop_capture_)
         {
           capture();
           std::this_thread::sleep_for(std::chrono::milliseconds(2));
         }
-
-        mc_rtc::log::warning("Stopping the capture thread for {}", name());
       });
 
   display_thread_ = std::thread(
@@ -127,7 +123,7 @@ void CameraDevice::startCaptureThread()
         bool window_created = false;
         is_display_ = false;
 
-        mc_rtc::log::warning("Entering the display thread for {}", name());
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
 
         while(!stop_capture_)
         {
@@ -135,7 +131,6 @@ void CameraDevice::startCaptureThread()
           {
             if(!window_created)
             {
-              mc_rtc::log::warning("Creating the window {}", name());
               cv::namedWindow(name(), cv::WINDOW_AUTOSIZE);
               window_created = true;
             }
@@ -147,36 +142,25 @@ void CameraDevice::startCaptureThread()
               cv::imshow(name(), image);
               cv::pollKey();
             }
-            else
-            {
-              std::cout << "Image is empty" << std::endl;
-            }
           }
           else
           {
             if(window_created)
             {
-              mc_rtc::log::warning("Destroying window {}", name());
               cv::destroyWindow(name());
               cv::waitKey(1);
               window_created = false;
             }
           }
         }
-
-        mc_rtc::log::warning("Stopping the display thread for {}", name());
       });
 }
 
 void CameraDevice::addToGUI(mc_rtc::gui::StateBuilder & gui)
 {
-  gui.addElement({"CameraPlugin"}, mc_rtc::gui::Checkbox(
-                                       "Display " + name(), [&]() { return is_display_; },
-                                       [&]()
-                                       {
-                                         is_display_ = !is_display_;
-                                         mc_rtc::log::info("Display {} : {}", name(), is_display_);
-                                       }));
+  gui.addElement(
+      {"CameraPlugin"},
+      mc_rtc::gui::Checkbox("Display " + name(), [&]() { return is_display_; }, [&]() { is_display_ = !is_display_; }));
 }
 
 void CameraDevice::capture()

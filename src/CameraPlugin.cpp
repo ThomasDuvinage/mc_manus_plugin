@@ -102,8 +102,6 @@ void CameraPlugin::reset(mc_control::MCGlobalController & controller)
             .addToGUI(*controller.controller().gui());
       }
     }
-
-    mc_rtc::log::info("Number of devices in the robot : {}", controller.robot().devices().size());
   }
   else
   {
