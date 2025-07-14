@@ -6,6 +6,8 @@ This plugin gets the image from a usb or a ros topic inside your controller easi
 
 * mc_rtc
 * OpenCV (>= 4.5.3)
+* image_transport (not consider when `WITH_ROS=OFF`)
+* cv_bridge (not consider when `WITH_ROS=OFF`)
 
 ## Install
 
@@ -14,7 +16,7 @@ git clone https://github.com/isri-aist/mc_camera_plugin
 cd mc_camera_plugin
 mkdir build && cd build
 # Please edit the INSTALL_PREFIX depending on your installation
-cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=${HOME}/workspace/install
+cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=${HOME}/workspace/install #-DWITH_ROS=OFF
 make
 make install
 ```
