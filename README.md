@@ -65,6 +65,7 @@ To get a camera stream from a ros2 topic, you need to add the following lines to
 CameraPlugin:
   - name: "camera_head"
     image_topic: "image_raw"
+    compressed: false
     parent: "tool0"
     cameraTransform:
       translation: [0, 0, 0]
@@ -108,6 +109,17 @@ display_thread = std::thread([&]{
     }
   });
 ```
+
+## Testing
+
+In order to test the plugin using ros2 topic, you can install `usb_cam` ros package.
+
+```bash
+ros2 run usb_cam usb_cam_node_exe --ros-args -p pixel_format:="mjpeg2rgb"
+```
+
+Then using the configuration given in the ROS section, you can get your camera stream in your controller or state.
+
 
 ## Debugging
 

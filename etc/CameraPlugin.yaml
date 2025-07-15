@@ -2,11 +2,12 @@
 CameraPlugin:
   - name: "camera_head"
     image_topic: "image_raw"
+    compressed: false
     parent: "tool0"
     cameraTransform:
       translation: [0, 0, 0]
       rotation: [0, 0, 0]
 
-  - name: "camera_hand"
-    index: 4
-    parent: "tool0"
+  # - name: "camera_hand"
+  #   index: 4
+  #   parent: "tool0"

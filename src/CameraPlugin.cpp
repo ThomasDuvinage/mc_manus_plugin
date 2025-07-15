@@ -72,8 +72,18 @@ void CameraPlugin::reset(mc_control::MCGlobalController & controller)
         else if(cam_cfg("image_topic").isString())
         {
 #ifdef WITH_ROS
-          cameras_.push_back(std::make_unique<mc_rbdyn::CameraDevice>(
-              name, parent, cameraTransform, static_cast<std::string>(cam_cfg("image_topic")), node_));
+          if(cam_cfg.has("compressed"))
+          {
+            mc_rtc::log::info("im here in compressed");
+            cameras_.push_back(std::make_unique<mc_rbdyn::CameraDevice>(
+                name, parent, cameraTransform, static_cast<std::string>(cam_cfg("image_topic")), cam_cfg("compressed"),
+                node_));
+          }
+          else
+          {
+            cameras_.push_back(std::make_unique<mc_rbdyn::CameraDevice>(
+                name, parent, cameraTransform, static_cast<std::string>(cam_cfg("image_topic")), false, node_));
+          }
 #else
           mc_rtc::log::error_and_throw(
               "[CameraPlugin] Please compile with WITH_ROS option to enable ROS functionnalities");

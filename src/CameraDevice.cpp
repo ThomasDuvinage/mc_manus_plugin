@@ -1,12 +1,6 @@
 #include "CameraDevice.h"
 #include <mc_rtc/gui/Checkbox.h>
-#include <mc_rtc/logging.h>
 #include <chrono>
-#include <functional>
-#include <mutex>
-#include <opencv2/highgui.hpp>
-#include <opencv2/videoio.hpp>
-#include <utility>
 
 namespace mc_rbdyn
 {
@@ -192,19 +186,26 @@ CameraDevice::CameraDevice(const std::string & name,
                            const std::string & parentBodyName,
                            const sva::PTransformd & X_p_f,
                            const std::string & topic,
+                           bool use_compressed,
                            rclcpp::Node::SharedPtr & node)
 : CameraDevice(name, parentBodyName, X_p_f)
 {
   id_ = -1;
   node_ = node;
   it_ = std::make_shared<image_transport::ImageTransport>(node_);
-  setTopic(topic);
-  startCaptureThread();
-}
 
-void CameraDevice::setTopic(const std::string & topic)
-{
-  image_sub_ = it_->subscribe(topic, 1, std::bind(&CameraDevice::imageCallback, this, std::placeholders::_1));
+  if(use_compressed)
+  {
+    image_transport::TransportHints hints(node_.get(), "compressed");
+    image_sub_ =
+        it_->subscribe(topic, 1, std::bind(&CameraDevice::imageCallback, this, std::placeholders::_1), nullptr, &hints);
+  }
+  else
+  {
+    image_sub_ = it_->subscribe(topic, 1, std::bind(&CameraDevice::imageCallback, this, std::placeholders::_1));
+  }
+
+  startCaptureThread();
 }
 
 void CameraDevice::imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr & msg)

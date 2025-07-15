@@ -69,9 +69,8 @@ struct MC_RBDYN_DLLAPI CameraDevice : public Device
                const std::string & parentBodyName,
                const sva::PTransformd & X_p_f,
                const std::string & topic,
+               bool use_compressed,
                rclcpp::Node::SharedPtr & node);
-
-  void setTopic(const std::string & topic);
 #endif
 
 private:
