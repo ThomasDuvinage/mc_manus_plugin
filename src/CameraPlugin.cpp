@@ -74,7 +74,6 @@ void CameraPlugin::reset(mc_control::MCGlobalController & controller)
 #ifdef WITH_ROS
           if(cam_cfg.has("compressed"))
           {
-            mc_rtc::log::info("im here in compressed");
             cameras_.push_back(std::make_unique<mc_rbdyn::CameraDevice>(
                 name, parent, cameraTransform, static_cast<std::string>(cam_cfg("image_topic")), cam_cfg("compressed"),
                 node_));
