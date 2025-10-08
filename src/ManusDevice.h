@@ -18,20 +18,20 @@
 
 namespace mc_rbdyn
 {
-struct MC_RBDYN_DLLAPI CameraDevice : public Device
+struct MC_RBDYN_DLLAPI ManusDevice : public Device
 {
-  CameraDevice();
-  ~CameraDevice() noexcept override;
+  ManusDevice();
+  ~ManusDevice() noexcept override;
 
-  CameraDevice(const CameraDevice & cd);
+  ManusDevice(const ManusDevice & cd);
 
-  CameraDevice & operator=(const CameraDevice & fs);
+  ManusDevice & operator=(const ManusDevice & fs);
 
-  CameraDevice(CameraDevice &&) noexcept = default;
-  CameraDevice & operator=(CameraDevice &&) = default;
+  ManusDevice(ManusDevice &&) noexcept = default;
+  ManusDevice & operator=(ManusDevice &&) = default;
 
-  CameraDevice(const std::string & name, const std::string & parentBodyName, const sva::PTransformd & X_p_f);
-  CameraDevice(const std::string & name, const std::string & parentBodyName, const sva::PTransformd & X_p_f, int id);
+  ManusDevice(const std::string & name, const std::string & parentBodyName, const sva::PTransformd & X_p_f);
+  ManusDevice(const std::string & name, const std::string & parentBodyName, const sva::PTransformd & X_p_f, int id);
 
   const cv::Mat & getImage();
   void setImage(const cv::Mat & image);
@@ -50,11 +50,11 @@ struct MC_RBDYN_DLLAPI CameraDevice : public Device
 
   DevicePtr clone() const override;
 
-  inline void setCameraId(int id)
+  inline void setManusId(int id)
   {
     id_ = id;
   }
-  inline int getCameraId() const
+  inline int getManusId() const
   {
     return id_;
   }
@@ -65,7 +65,7 @@ struct MC_RBDYN_DLLAPI CameraDevice : public Device
   void release() const;
 
 #ifdef WITH_ROS
-  CameraDevice(const std::string & name,
+  ManusDevice(const std::string & name,
                const std::string & parentBodyName,
                const sva::PTransformd & X_p_f,
                const std::string & topic,

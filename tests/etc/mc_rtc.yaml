@@ -4,5 +4,5 @@ Enabled: Posture
 
 IncludeHalfSitController: false
 ClearGlobalPluginiPath: true
-Plugins: [ CameraPlugin ]
-GlobalPluginPaths: ["$<TARGET_FILE_DIR:CameraPlugin>"]
+Plugins: [ ManusPlugin ]
+GlobalPluginPaths: ["$<TARGET_FILE_DIR:ManusPlugin>"]

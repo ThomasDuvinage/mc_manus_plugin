@@ -6,7 +6,7 @@
 
 #include <mc_control/GlobalPlugin.h>
 #include <mc_rtc/Configuration.h>
-#include "CameraDevice.h"
+#include "ManusDevice.h"
 
 #include "opencv2/highgui/highgui.hpp"
 #include <opencv2/videoio.hpp>
@@ -20,7 +20,7 @@
 namespace mc_plugin
 {
 
-struct CameraPlugin : public mc_control::GlobalPlugin
+struct ManusPlugin : public mc_control::GlobalPlugin
 {
   void init(mc_control::MCGlobalController & controller, const mc_rtc::Configuration & config) override;
 
@@ -32,7 +32,7 @@ struct CameraPlugin : public mc_control::GlobalPlugin
 
   mc_control::GlobalPlugin::GlobalPluginConfiguration configuration() override;
 
-  ~CameraPlugin() override;
+  ~ManusPlugin() override;
 
 private:
 #ifdef WITH_ROS
@@ -43,7 +43,7 @@ private:
 
   std::thread capture_thread_;
   bool stop_capture_;
-  std::vector<std::unique_ptr<mc_rbdyn::CameraDevice>> cameras_;
+  std::vector<std::unique_ptr<mc_rbdyn::ManusDevice>> manuss_;
   mc_rtc::Configuration config_;
 };
 

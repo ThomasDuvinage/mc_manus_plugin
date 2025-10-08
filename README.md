@@ -1,4 +1,4 @@
-# mc_camera_pluging
+# mc_manus_pluging
 
 This plugin gets the image from a usb or a ros topic inside your controller easily.
 
@@ -12,8 +12,8 @@ This plugin gets the image from a usb or a ros topic inside your controller easi
 ## Install
 
 ```bash
-git clone https://github.com/isri-aist/mc_camera_plugin
-cd mc_camera_plugin
+git clone https://github.com/isri-aist/mc_manus_plugin
+cd mc_manus_plugin
 mkdir build && cd build
 # Please edit the INSTALL_PREFIX depending on your installation
 cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=${HOME}/workspace/install #-DWITH_ROS=OFF
@@ -26,14 +26,14 @@ make install
 In order to use this plugin, please consider adding the following line to your configuration file (`~/.config/mc_rtc/mc_rtc.yaml`).
 
 ```yaml
-Plugins: [CameraPlugin]
+Plugins: [ManusPlugin]
 ```
 
-After following the instructions for USB or ROS, you can run your controller. A new table `CameraPlugin` should appear in `mc_rtc_panel`.
+After following the instructions for USB or ROS, you can run your controller. A new table `ManusPlugin` should appear in `mc_rtc_panel`.
 
 ### USB
 
-To get the camera stream for a usb camera, you must get the index of the camera. To do that, you can use the following command line:
+To get the manus stream for a usb manus, you must get the index of the manus. To do that, you can use the following command line:
 
 ```bash
 v4l2-ctl --list-devices
@@ -48,46 +48,46 @@ v4l2-ctl --list-devices
 Once you know the index, you can add the following lines to your `mc_rtc` configuration file :
 
 ```yaml
-CameraPlugin:
-  - name: "camera_hand"
+ManusPlugin:
+  - name: "manus_hand"
     index: 4
-    cameraBody: "tool0" # body one which to install the camera
-    cameraTransform: # [Optional] Panret's frame offset
+    manusBody: "tool0" # body one which to install the manus
+    manusTransform: # [Optional] Panret's frame offset
       translation: [0, 0, 0]
       rotation: [0, 0, 0]
 ```
 
 ### ROS
 
-To get a camera stream from a ros2 topic, you need to add the following lines to your configuration file
+To get a manus stream from a ros2 topic, you need to add the following lines to your configuration file
 
 ```yaml
-CameraPlugin:
-  - name: "camera_head"
+ManusPlugin:
+  - name: "manus_head"
     image_topic: "image_raw"
     compressed: false
     parent: "tool0"
-    cameraTransform:
+    manusTransform:
       translation: [0, 0, 0]
       rotation: [0, 0, 0]
 ```
 
-> **Please note that you can set multiple cameras (e.g. `/etc/CameraPlugin.yaml`)**
+> **Please note that you can set multiple manuss (e.g. `/etc/ManusPlugin.yaml`)**
 
 ## Get the stream in my controller
 
 In order to get the stream in your controller, you need to set a thread.
-The role of this thread is to retrieve the stream from the `mc_rbdyn::CameraDevice` that has been added to the robot via the `CameraPlugin`.
+The role of this thread is to retrieve the stream from the `mc_rbdyn::ManusDevice` that has been added to the robot via the `ManusPlugin`.
 
 **Image or heavy computations must not be in the run method of your controller**
 
 * In the `CMakeLists.txt` :
 
 ```cmake
-find_package(mc_camera REQUIRED)
+find_package(mc_manus REQUIRED)
 
 # PROJECT NAME might be change to your library's name
-target_link_libraries(${PROJECT_NAME} PUBLIC mc_rbdyn::mc_camera)
+target_link_libraries(${PROJECT_NAME} PUBLIC mc_rbdyn::mc_manus)
 ```
 
 * In your controller or state :
@@ -97,8 +97,8 @@ target_link_libraries(${PROJECT_NAME} PUBLIC mc_rbdyn::mc_camera)
 
 display_thread = std::thread([&]{
     while(true){
-      if(robot().hasDevice<mc_rbdyn::CameraDevice>("camera_head")){
-        auto & cam = robot().device<mc_rbdyn::CameraDevice>("camera_head");
+      if(robot().hasDevice<mc_rbdyn::ManusDevice>("manus_head")){
+        auto & cam = robot().device<mc_rbdyn::ManusDevice>("manus_head");
         const auto & img = cam.getImage();
 
         if(!img.empty()){
@@ -118,12 +118,12 @@ In order to test the plugin using ros2 topic, you can install `usb_cam` ros pack
 ros2 run usb_cam usb_cam_node_exe --ros-args -p pixel_format:="mjpeg2rgb"
 ```
 
-Then using the configuration given in the ROS section, you can get your camera stream in your controller or state.
+Then using the configuration given in the ROS section, you can get your manus stream in your controller or state.
 
 
 ## Debugging
 
-To visualize the stream, please edit the checkbox status from the tab `CameraPlugin` in `mc_rtc_panel` (rviz).
+To visualize the stream, please edit the checkbox status from the tab `ManusPlugin` in `mc_rtc_panel` (rviz).
 
 ```bash
 ros2 launch mc_rtc_ticker display.launch

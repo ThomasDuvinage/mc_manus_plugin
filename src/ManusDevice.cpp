@@ -1,17 +1,17 @@
-#include "CameraDevice.h"
+#include "ManusDevice.h"
 #include <mc_rtc/gui/Checkbox.h>
 #include <chrono>
 
 namespace mc_rbdyn
 {
 
-CameraDevice::CameraDevice(const std::string & name, const std::string & parentBodyName, const sva::PTransformd & X_p_f)
+ManusDevice::ManusDevice(const std::string & name, const std::string & parentBodyName, const sva::PTransformd & X_p_f)
 : Device(name, parentBodyName, X_p_f), stop_capture_(false)
 {
-  type_ = "CameraDeviceSensor";
+  type_ = "ManusDeviceSensor";
 }
 
-CameraDevice::~CameraDevice() noexcept
+ManusDevice::~ManusDevice() noexcept
 {
   stop_capture_ = true;
   is_display_ = false;
@@ -26,11 +26,11 @@ CameraDevice::~CameraDevice() noexcept
   }
 };
 
-CameraDevice::CameraDevice() : CameraDevice("", "", sva::PTransformd::Identity()) {}
+ManusDevice::ManusDevice() : ManusDevice("", "", sva::PTransformd::Identity()) {}
 
-CameraDevice::CameraDevice(const CameraDevice & cd) : CameraDevice(cd.name(), cd.parentBody(), cd.X_p_f())
+ManusDevice::ManusDevice(const ManusDevice & cd) : ManusDevice(cd.name(), cd.parentBody(), cd.X_p_f())
 {
-  id_ = cd.getCameraId();
+  id_ = cd.getManusId();
 
 #ifdef WITH_ROS
   node_ = cd.node_;
@@ -39,7 +39,7 @@ CameraDevice::CameraDevice(const CameraDevice & cd) : CameraDevice(cd.name(), cd
   if(cd.image_sub_.getTopic() != "")
   {
     image_sub_ = it_->subscribe(cd.image_sub_.getTopic(), 1,
-                                std::bind(&CameraDevice::imageCallback, this, std::placeholders::_1));
+                                std::bind(&ManusDevice::imageCallback, this, std::placeholders::_1));
   }
 #endif
 
@@ -54,18 +54,18 @@ CameraDevice::CameraDevice(const CameraDevice & cd) : CameraDevice(cd.name(), cd
   startCaptureThread();
 }
 
-CameraDevice::CameraDevice(const std::string & name,
+ManusDevice::ManusDevice(const std::string & name,
                            const std::string & parentBodyName,
                            const sva::PTransformd & X_p_f,
                            int id)
-: CameraDevice(name, parentBodyName, X_p_f)
+: ManusDevice(name, parentBodyName, X_p_f)
 {
   id_ = id;
   open();
   startCaptureThread();
 }
 
-CameraDevice & CameraDevice::operator=(const CameraDevice & cd)
+ManusDevice & ManusDevice::operator=(const ManusDevice & cd)
 {
   if(&cd == this)
   {
@@ -79,25 +79,25 @@ CameraDevice & CameraDevice::operator=(const CameraDevice & cd)
   node_ = cd.node_;
   it_ = std::make_shared<image_transport::ImageTransport>(node_);
   image_sub_ =
-      it_->subscribe(image_sub_.getTopic(), 1, std::bind(&CameraDevice::imageCallback, this, std::placeholders::_1));
+      it_->subscribe(image_sub_.getTopic(), 1, std::bind(&ManusDevice::imageCallback, this, std::placeholders::_1));
 #endif
   return *this;
 }
 
-DevicePtr CameraDevice::clone() const
+DevicePtr ManusDevice::clone() const
 {
-  return DevicePtr(new CameraDevice(*this));
+  return DevicePtr(new ManusDevice(*this));
 }
 
-void CameraDevice::open()
+void ManusDevice::open()
 {
   if(!cam_.open(id_))
   {
-    mc_rtc::log::error_and_throw("[CameraPlugin::Camera] Camera {} cannot be openned with id: {}", name_, id_);
+    mc_rtc::log::error_and_throw("[ManusPlugin::Manus] Manus {} cannot be openned with id: {}", name_, id_);
   }
 }
 
-void CameraDevice::startCaptureThread()
+void ManusDevice::startCaptureThread()
 {
   capture_thread_ = std::thread(
       [this]
@@ -148,14 +148,14 @@ void CameraDevice::startCaptureThread()
       });
 }
 
-void CameraDevice::addToGUI(mc_rtc::gui::StateBuilder & gui)
+void ManusDevice::addToGUI(mc_rtc::gui::StateBuilder & gui)
 {
   gui.addElement(
-      {"CameraPlugin"},
+      {"ManusPlugin"},
       mc_rtc::gui::Checkbox("Display " + name(), [&]() { return is_display_; }, [&]() { is_display_ = !is_display_; }));
 }
 
-void CameraDevice::capture()
+void ManusDevice::capture()
 {
   const std::lock_guard<std::mutex> lock(image_mtx_);
   if(cam_.isOpened())
@@ -164,31 +164,31 @@ void CameraDevice::capture()
   }
 }
 
-const cv::Mat & CameraDevice::getImage()
+const cv::Mat & ManusDevice::getImage()
 {
   const std::lock_guard<std::mutex> lock(image_mtx_);
   return image_;
 }
 
-void CameraDevice::setImage(const cv::Mat & image)
+void ManusDevice::setImage(const cv::Mat & image)
 {
   const std::lock_guard<std::mutex> lock(image_mtx_);
   image_ = image;
 }
 
-void CameraDevice::release() const
+void ManusDevice::release() const
 {
   cam_.release();
 }
 
 #ifdef WITH_ROS
-CameraDevice::CameraDevice(const std::string & name,
+ManusDevice::ManusDevice(const std::string & name,
                            const std::string & parentBodyName,
                            const sva::PTransformd & X_p_f,
                            const std::string & topic,
                            bool use_compressed,
                            rclcpp::Node::SharedPtr & node)
-: CameraDevice(name, parentBodyName, X_p_f)
+: ManusDevice(name, parentBodyName, X_p_f)
 {
   id_ = -1;
   node_ = node;
@@ -198,17 +198,17 @@ CameraDevice::CameraDevice(const std::string & name,
   {
     image_transport::TransportHints hints(node_.get(), "compressed");
     image_sub_ =
-        it_->subscribe(topic, 1, std::bind(&CameraDevice::imageCallback, this, std::placeholders::_1), nullptr, &hints);
+        it_->subscribe(topic, 1, std::bind(&ManusDevice::imageCallback, this, std::placeholders::_1), nullptr, &hints);
   }
   else
   {
-    image_sub_ = it_->subscribe(topic, 1, std::bind(&CameraDevice::imageCallback, this, std::placeholders::_1));
+    image_sub_ = it_->subscribe(topic, 1, std::bind(&ManusDevice::imageCallback, this, std::placeholders::_1));
   }
 
   startCaptureThread();
 }
 
-void CameraDevice::imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr & msg)
+void ManusDevice::imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr & msg)
 {
   const std::lock_guard<std::mutex> lock(image_mtx_);
   image_ = cv_bridge::toCvShare(msg, "bgr8")->image.clone();
