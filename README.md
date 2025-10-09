@@ -1,13 +1,55 @@
 # mc_manus_pluging
 
-This plugin gets the image from a usb or a ros topic inside your controller easily.
+This plugin gets the data of the [Manus gloves] (https://www.manus-meta.com/products/quantum-metagloves) using the tools of Manus gloves for the C++ SDK of Linux you could look the documentation in the official web site (https://docs.manus-meta.com/3.0.0/Plugins/SDK/Linux/), it get the ros topics inside of the controller easily. 
+
+
 
 ## Dependencies
 
 * mc_rtc
-* OpenCV (>= 4.5.3)
-* image_transport (not consider when `WITH_ROS=OFF`)
-* cv_bridge (not consider when `WITH_ROS=OFF`)
+* ROS2
+
+## Prerequisites to install
+
+* Installing required packages with a single line sudo: Installing required packages
+```bash
+sudo apt-get update && sudo apt-get install -y build-essential git libtool libzmq3-dev libusb-1.0-0-dev zlib1g-dev libudev-dev gdb libncurses5-dev && sudo apt-get clean
+```
+
+* Clone the GRPC repository and all its submodules from GitHub to your local machine using the following command: 
+```bash
+sudo git clone -b v1.28.1 https://github.com/grpc/grpc /var/local/git/grpc && cd /var/local/git/grpc && sudo git submodule update --init --recursive
+```
+
+* Install the protobuf dependency by running the following command:
+```bash
+cd /var/local/git/grpc/third_party/protobuf && sudo ./autogen.sh && sudo ./configure --enable-shared && sudo make -j$(nproc) && sudo make -j$(nproc) check && sudo make install && sudo make clean && sudo ldconfig
+```
+
+* Finally install GRPC by running the command below:
+```bash
+cd /var/local/git/grpc && sudo make -j$(nproc) && sudo make install && sudo make clean && sudo ldconfig
+```
+
+* Core Integrated 
+```bash
+sudo apt-get update && sudo apt-get install -y build-essential libusb-1.0-0-dev zlib1g-dev libudev-dev gdb libncurses5-dev && sudo apt-get clean
+```
+
+* Device rules: To allow connections to MANUS hardware you need to place the following file in the etc/udev/rules.d/ directory. This will allow the devices to be recognized and accessed by the system. After doing this, a full reboot is recommended to apply the changes. The naming of the file is relevant we recommend naming it 70-manus-hid.rules.
+
+  * 70-manus-hid.rules
+
+```bash
+# HIDAPI/libusb
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="3325", MODE:="0666"
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="1915", ATTRS{idProduct}=="83fd", MODE:="0666"
+
+# HIDAPI/hidraw
+KERNEL=="hidraw*", ATTRS{idVendor}=="3325", MODE:="0666"
+```
+
+
 
 ## Install
 
