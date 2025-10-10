@@ -11,33 +11,33 @@ This plugin gets the data of the [Manus gloves](https://www.manus-meta.com/produ
 
 ## Prerequisites to install
 
-### Installing required packages with a single line sudo: Installing required packages
+#### Installing required packages with a single line sudo: Installing required packages
 ```bash
 sudo apt-get update && sudo apt-get install -y build-essential git libtool libzmq3-dev libusb-1.0-0-dev zlib1g-dev libudev-dev gdb libncurses5-dev && sudo apt-get clean
 ```
 
-### Clone the GRPC repository and all its submodules from GitHub to your local machine using the following command: 
+#### Clone the GRPC repository and all its submodules from GitHub to your local machine using the following command: 
 ```bash
 sudo git clone -b v1.28.1 https://github.com/grpc/grpc /var/local/git/grpc && cd /var/local/git/grpc && sudo git submodule update --init --recursive
 ```
 
-### Install the protobuf dependency by running the following command:
+#### Install the protobuf dependency by running the following command:
 ```bash
 cd /var/local/git/grpc/third_party/protobuf && sudo ./autogen.sh && sudo ./configure --enable-shared && sudo make -j$(nproc) && sudo make -j$(nproc) check && sudo make install && sudo make clean && sudo ldconfig
 ```
-### Finally install GRPC by running the command below:
+#### Finally install GRPC by running the command below:
 ```bash
 cd /var/local/git/grpc && sudo make -j$(nproc) && sudo make install && sudo make clean && sudo ldconfig
 ```
 
-### Core Integrated 
+#### Core Integrated 
 ```bash
 sudo apt-get update && sudo apt-get install -y build-essential libusb-1.0-0-dev zlib1g-dev libudev-dev gdb libncurses5-dev && sudo apt-get clean
 ```
 
-### Device rules: To allow connections to MANUS hardware you need to place the following file in the etc/udev/rules.d/ directory. This will allow the devices to be recognized and accessed by the system. After doing this, a full reboot is recommended to apply the changes. The naming of the file is relevant we recommend naming it 70-manus-hid.rules.
+#### Device rules: To allow connections to MANUS hardware you need to place the following file in the etc/udev/rules.d/ directory. This will allow the devices to be recognized and accessed by the system. After doing this, a full reboot is recommended to apply the changes. The naming of the file is relevant we recommend naming it 70-manus-hid.rules.
 
-  #### 70-manus-hid.rules
+  ##### 70-manus-hid.rules
 
 ```bash
 # HIDAPI/libusb
@@ -48,12 +48,14 @@ SUBSYSTEMS=="usb", ATTRS{idVendor}=="1915", ATTRS{idProduct}=="83fd", MODE:="066
 KERNEL=="hidraw*", ATTRS{idVendor}=="3325", MODE:="0666"
 ```
 
+#### Docker
+
+
+Instead of setting up a linux machine, you can also use docker to set up your development environment. Dockerfiles for both integrated and remote are added at the bottom of this section, and also included within the SDK package. Please be mindful to replace the username and password.
 
 
 ## Install
-Enter in this [link](https://docs.manus-meta.com/latest/Resources/) and install the MANUS Core 3 SDK (including ROS2 Package) you could put it in a specific folder. 
 
-![MANUS Core 3 SDK (including ROS2 Package)](images/manusDownload.png)
 
 ```bash
 git clone https://github.com/isri-aist/mc_manus_plugin
@@ -64,6 +66,15 @@ cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=${HOME}/worksp
 make
 make install
 ```
+
+To use the Manus Core 3 you need to download the [MANUS Core 3 SDK (including ROS2 Package)](https://docs.manus-meta.com/latest/Resources/)
+
+And you have to click in this option:
+![MANUS Core 3 SDK including ROS2 Package](images/manusDownload.png)
+
+This will give you a .zip that you will have to put in your workspace.
+The File that you have to focus on is, SDKClient_Linux 
+
 
 ## Usage
 
