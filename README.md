@@ -1,4 +1,4 @@
-# mc_manus_pluging
+# mc_manus_plugin
 
 This plugin gets the data of the [Manus gloves](https://www.manus-meta.com/products/quantum-metagloves) using the tools of Manus gloves for the C++ SDK of Linux you could look the documentation in the official [web site](https://docs.manus-meta.com/3.0.0/Plugins/SDK/Linux/), it get the ros topics inside of the controller easily. 
 
@@ -51,6 +51,9 @@ KERNEL=="hidraw*", ATTRS{idVendor}=="3325", MODE:="0666"
 
 
 ## Install
+Enter in this [link](https://docs.manus-meta.com/latest/Resources/) and install the MANUS Core 3 SDK (including ROS2 Package) you could put it in a specific folder. 
+
+![MANUS Core 3 SDK (including ROS2 Package)](images/manusDownload.png)
 
 ```bash
 git clone https://github.com/isri-aist/mc_manus_plugin
