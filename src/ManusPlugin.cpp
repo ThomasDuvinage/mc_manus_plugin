@@ -61,7 +61,7 @@ void ManusPlugin::reset(mc_control::MCGlobalController & controller)
         manusTransform = cam_cfg("manusTransform");
       }
 
-      if(cam_cfg.has("index") || cam_cfg.has("image_topic"))
+      if(cam_cfg.has("index") || cam_cfg.has("hand_topic"))
       {
         if(cam_cfg.has("index") && cam_cfg("index").isInteger())
         {
@@ -69,19 +69,19 @@ void ManusPlugin::reset(mc_control::MCGlobalController & controller)
                                                                       static_cast<int>(cam_cfg("index"))));
           mc_rtc::log::info("[ManusPlugin] Manus {} Initialized", name);
         }
-        else if(cam_cfg("image_topic").isString())
+        else if(cam_cfg("hand_topic").isString())
         {
 #ifdef WITH_ROS
           if(cam_cfg.has("compressed"))
           {
             manuss_.push_back(std::make_unique<mc_rbdyn::ManusDevice>(
-                name, parent, manusTransform, static_cast<std::string>(cam_cfg("image_topic")), cam_cfg("compressed"),
+                name, parent, manusTransform, static_cast<std::string>(cam_cfg("hand_topic")), cam_cfg("compressed"),
                 node_));
           }
           else
           {
             manuss_.push_back(std::make_unique<mc_rbdyn::ManusDevice>(
-                name, parent, manusTransform, static_cast<std::string>(cam_cfg("image_topic")), false, node_));
+                name, parent, manusTransform, static_cast<std::string>(cam_cfg("hand_topic")), false, node_));
           }
 #else
           mc_rtc::log::error_and_throw(
@@ -91,12 +91,12 @@ void ManusPlugin::reset(mc_control::MCGlobalController & controller)
         }
         else
         {
-          mc_rtc::log::error_and_throw("[ManusPlugin] index (int) or image_topic (string)");
+          mc_rtc::log::error_and_throw("[ManusPlugin] index (int) or hand_topic (string)");
         }
       }
       else
       {
-        mc_rtc::log::error_and_throw("[ManusPlugin] An index or image_topic should be given for manus : {}", name);
+        mc_rtc::log::error_and_throw("[ManusPlugin] An index or hand_topic should be given for manus : {}", name);
       }
     }
 

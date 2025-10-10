@@ -32,7 +32,6 @@ ManusDevice::ManusDevice(const ManusDevice & cd) : ManusDevice(cd.name(), cd.par
 {
   id_ = cd.getManusId();
 
-#ifdef WITH_ROS
   node_ = cd.node_;
   it_ = std::make_shared<image_transport::ImageTransport>(node_);
 
@@ -41,7 +40,10 @@ ManusDevice::ManusDevice(const ManusDevice & cd) : ManusDevice(cd.name(), cd.par
     image_sub_ = it_->subscribe(cd.image_sub_.getTopic(), 1,
                                 std::bind(&ManusDevice::imageCallback, this, std::placeholders::_1));
   }
-#endif
+
+ifdef WITH_ROS
+  node_ = cd.node_;
+
 
   if(cd.cam_.isOpened())
   {

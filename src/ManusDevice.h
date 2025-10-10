@@ -4,15 +4,7 @@
 #include <mc_rtc/gui.h>
 #include <SpaceVecAlg/SpaceVecAlg>
 
-#include "opencv2/highgui/highgui.hpp"
-#include <opencv2/videoio.hpp>
-#include <thread>
-
 #ifdef WITH_ROS
-#  include <cv_bridge/cv_bridge.h>
-#  include <image_transport/image_transport.hpp>
-#  include <image_transport/subscriber.hpp>
-#  include <rclcpp/executor.hpp>
 #  include <rclcpp/rclcpp.hpp>
 #endif
 

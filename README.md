@@ -1,6 +1,6 @@
 # mc_manus_pluging
 
-This plugin gets the data of the [Manus gloves] (https://www.manus-meta.com/products/quantum-metagloves) using the tools of Manus gloves for the C++ SDK of Linux you could look the documentation in the official web site (https://docs.manus-meta.com/3.0.0/Plugins/SDK/Linux/), it get the ros topics inside of the controller easily. 
+This plugin gets the data of the [Manus gloves](https://www.manus-meta.com/products/quantum-metagloves) using the tools of Manus gloves for the C++ SDK of Linux you could look the documentation in the official [web site](https://docs.manus-meta.com/3.0.0/Plugins/SDK/Linux/), it get the ros topics inside of the controller easily. 
 
 
 
@@ -66,6 +66,8 @@ make install
 ## Usage
 
 In order to use this plugin, please consider adding the following line to your configuration file (`~/.config/mc_rtc/mc_rtc.yaml`).
+
+Also you need to run the 
 
 ```yaml
 Plugins: [ManusPlugin]
