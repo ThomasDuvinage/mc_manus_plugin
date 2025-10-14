@@ -48,10 +48,34 @@ SUBSYSTEMS=="usb", ATTRS{idVendor}=="1915", ATTRS{idProduct}=="83fd", MODE:="066
 KERNEL=="hidraw*", ATTRS{idVendor}=="3325", MODE:="0666"
 ```
 
+#### Install the packages of manus 
+
+To use the Manus Core 3 you need to download the [MANUS Core 3 SDK (including ROS2 Package)](https://docs.manus-meta.com/latest/Resources/)
+
+And you have to click in this option:
+![MANUS Core 3 SDK including ROS2 Package](images/manusDownload.png)
+
+This will give you a .zip that you will have to put in your workspace.
+The File that you have to focus on is, SDKClient_Linux 
+
+
+
 #### Docker
 
 
-Instead of setting up a linux machine, you can also use docker to set up your development environment. Dockerfiles for both integrated and remote are added at the bottom of this section, and also included within the SDK package. Please be mindful to replace the username and password.
+Instead of setting up a linux machine, you can also use docker to set up your development environment. Dockerfiles for both **integrated** and **remote**. For this implementation you should use the **integrated** mode, so you could have everything in linux environment. 
+
+#### Build integrated docker image
+```bash
+docker build -f ./Dockerfile.Integrated -t manus-linux-integrated .
+```
+Once the Docker image is built, run a container with the manus-linux-integrated image. The --net=host is not strictly necessary but helps the container communicate out of its context. The --privileged parameter is required to access the USB glove devices, so is mounting the /dev and /run/udev directories.
+
+#### Run integrated docker container
+```bash
+docker run -p 5000:5000 --privileged -v /dev:/dev -v /run/udev:/run/udev -i -t manus-linux-integrated /bin/bash
+```
+
 
 
 ## Install
@@ -66,15 +90,21 @@ cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=${HOME}/worksp
 make
 make install
 ```
+## Compilation
+For compiling the examples we have three diffrent options.
 
-To use the Manus Core 3 you need to download the [MANUS Core 3 SDK (including ROS2 Package)](https://docs.manus-meta.com/latest/Resources/)
+```bash
+1. Make
+2. Visual Studio Code
+3. Visual Studio (remote cross compile)
+```
 
-And you have to click in this option:
-![MANUS Core 3 SDK including ROS2 Package](images/manusDownload.png)
+## Make
+A Makefile is present within the SDKMinimalCLient_Linux and SDKClient_Linux folders inside the MANUS SDK package. The example can be compiled using the following command.
 
-This will give you a .zip that you will have to put in your workspace.
-The File that you have to focus on is, SDKClient_Linux 
-
+```bash
+make all
+```
 
 ## Usage
 
