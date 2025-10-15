@@ -1,13 +1,12 @@
 ---
 ManusPlugin:
-  - name: "manus_right"
-    hand_topic: "image_raw"
-    compressed: false
-    parent: "tool0"
+  - name: "right_hand"
+    parent: "tool0
+    topic: "/manus_glove_0"
     manusTransform:
       translation: [0, 0, 0]
       rotation: [0, 0, 0]
 
-  # - name: "manus_hand"
-  #   index: 4
-  #   parent: "tool0"
+  - name: "left_hand"
+    parent: "tool0"
+    topic: "/manus_glove_1"

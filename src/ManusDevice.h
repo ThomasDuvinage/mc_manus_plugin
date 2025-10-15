@@ -1,93 +1,93 @@
-#pragma once
+  #pragma once
 
-#include <mc_rbdyn/Device.h>
-#include <mc_rtc/gui.h>
-#include <SpaceVecAlg/SpaceVecAlg>
+  #include <mc_rbdyn/Device.h>
+  #include <mc_rtc/gui.h>
+  #include <SpaceVecAlg/SpaceVecAlg>
 
-#ifdef WITH_ROS
-#  include <rclcpp/rclcpp.hpp>
-#endif
+  #include <chrono>
+  #include <mutex>
+  #include <optional>
+  #include <string>
+  #include <vector>
 
-namespace mc_rbdyn
-{
-struct MC_RBDYN_DLLAPI ManusDevice : public Device
-{
-  ManusDevice();
-  ~ManusDevice() noexcept override;
+  #ifdef WITH_ROS
+  #  include <manus_ros2/msg/manus_glove.hpp>// Ask for this, let to see other environments
+  #  include <rclcpp/rclcpp.hpp>
+  #endif
 
-  ManusDevice(const ManusDevice & cd);
-
-  ManusDevice & operator=(const ManusDevice & fs);
-
-  ManusDevice(ManusDevice &&) noexcept = default;
-  ManusDevice & operator=(ManusDevice &&) = default;
-
-  ManusDevice(const std::string & name, const std::string & parentBodyName, const sva::PTransformd & X_p_f);
-  ManusDevice(const std::string & name, const std::string & parentBodyName, const sva::PTransformd & X_p_f, int id);
-
-  const cv::Mat & getImage();
-  void setImage(const cv::Mat & image);
-
-  /** Return the sensor's parent body */
-  inline const std::string & parentBody() const
+  namespace mc_rbdyn
   {
-    return Device::parent();
-  }
 
-  /** Return the transformation from the parent body to the sensor (model) */
-  inline const sva::PTransformd & X_p_f() const
+  struct ManusDevice : public Device
   {
-    return Device::X_p_s();
-  }
+    struct RawNode
+    {
+      int nodeId{0};
+      int parentNodeId{0};
+      std::string jointType;
+      std::string chainType;
+      sva::PTransformd pose{Eigen::Matrix3d::Identity(), Eigen::Vector3d::Zero()};
+    };
 
-  DevicePtr clone() const override;
+    struct Ergonomics
+    {
+      std::string type;
+      double value{0.};
+    };
 
-  inline void setManusId(int id)
-  {
-    id_ = id;
-  }
-  inline int getManusId() const
-  {
-    return id_;
-  }
+    struct RawSensor
+    {
+      int sensorId{0};
+      sva::PTransformd pose{Eigen::Matrix3d::Identity(), Eigen::Vector3d::Zero()};
+    };
 
-  void addToGUI(mc_rtc::gui::StateBuilder & gui);
+    struct Data
+    {
+      int gloveId{-1};
+      std::string side;
+      std::vector<RawNode> rawNodes;
+      std::vector<Ergonomics> ergonomics;
+      std::optional<Eigen::Quaterniond> wristOrientation;
+      std::vector<RawSensor> rawSensors;
+      std::chrono::steady_clock::time_point stamp{};
+    };
 
-  void capture();
-  void release() const;
+    ManusDevice();
+    ~ManusDevice() noexcept override = default;
 
-#ifdef WITH_ROS
-  ManusDevice(const std::string & name,
-               const std::string & parentBodyName,
-               const sva::PTransformd & X_p_f,
-               const std::string & topic,
-               bool use_compressed,
-               rclcpp::Node::SharedPtr & node);
-#endif
+    ManusDevice(const ManusDevice & other);
+    ManusDevice & operator=(const ManusDevice & other);
 
-private:
-#ifdef WITH_ROS
-  image_transport::Subscriber image_sub_;
-  std::shared_ptr<image_transport::ImageTransport> it_;
-  rclcpp::Node::SharedPtr node_;
-  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr & msg);
-#endif
+    ManusDevice(ManusDevice &&) noexcept = default;
+    ManusDevice & operator=(ManusDevice &&) noexcept = default;
 
-  void startCaptureThread();
+    ManusDevice(const std::string & name, const std::string & parentBodyName, const sva::PTransformd & X_p_f);
 
-  void open();
+  #ifdef WITH_ROS
+    ManusDevice(const std::string & name,
+                const std::string & parentBodyName,
+                const sva::PTransformd & X_p_f,
+                const std::string & topic,
+                rclcpp::Node::SharedPtr node);
+  #endif
 
-private:
-  std::mutex image_mtx_;
-  cv::Mat image_;
-  int id_;
+    DevicePtr clone() const override;
 
-  std::thread capture_thread_;
-  std::thread display_thread_;
-  bool is_display_;
-  bool stop_capture_;
+    const Data data() const;
 
-  mutable cv::VideoCapture cam_;
-};
+    void addToGUI(mc_rtc::gui::StateBuilder & gui);
 
-} // namespace mc_rbdyn
+  private:
+    mutable std::mutex dataMutex_;
+    Data data_;
+
+  #ifdef WITH_ROS
+    void gloveCallback(const manus_ros2::msg::ManusGlove::SharedPtr msg);
+
+    std::string topic_;
+    rclcpp::Node::SharedPtr node_;
+    rclcpp::Subscription<manus_ros2::msg::ManusGlove>::SharedPtr sub_;
+  #endif
+  };
+
+  } // namespace mc_rbdyn

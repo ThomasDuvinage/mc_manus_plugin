@@ -10,29 +10,28 @@ enable_testing()
 
 option(WITH_ROS "Enable ROS communication" ON)
 
-# Find mc_rtc if we are not building inside mc_rtc itself
 if(NOT TARGET mc_rtc::mc_control)
   find_package(mc_rtc REQUIRED)
 endif()
 
-find_package(OpenCV REQUIRED)
-
 if(WITH_ROS)
-  find_package(cv_bridge REQUIRED)
-  find_package(image_transport REQUIRED)
-  find_package(sensor_msgs REQUIRED)
+  find_package(rclcpp REQUIRED)
+  find_package(manus_ros2_msgs REQUIRED)
+  find_package(geometry_msgs REQUIRED)
+
+  target_compile_definitions(mc_manus PRIVATE WITH_ROS)
+  ament_target_dependencies(mc_manus rclcpp manus_ros2_msgs geometry_msgs)
 endif()
 
+
 add_library(mc_manus SHARED src/ManusDevice.cpp src/ManusDevice.h)
-target_link_libraries(mc_manus PUBLIC ${OpenCV_LIBRARIES} mc_rtc::mc_rbdyn)
+target_link_libraries(mc_manus PUBLIC mc_rtc::mc_rbdyn)
 
 if(WITH_ROS)
   target_compile_definitions(mc_manus PRIVATE WITH_ROS)
-  target_link_libraries(
-    mc_manus PUBLIC cv_bridge::cv_bridge image_transport::image_transport
-                     "${sensor_msgs_TARGETS}")
-
+  ament_target_dependencies(mc_manus rclcpp manus_ros2) # adapt if different targets are exported
 endif()
+
 
 set(MC_CAMERA_EXPORT_NAME mc_manus)
 install(

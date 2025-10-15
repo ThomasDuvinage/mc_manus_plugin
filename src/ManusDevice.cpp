@@ -1,220 +1,153 @@
-#include "ManusDevice.h"
-#include <mc_rtc/gui/Checkbox.h>
-#include <chrono>
+  #include "ManusDevice.h"
 
-namespace mc_rbdyn
-{
+  #include <mc_rtc/gui/Label.h>
 
-ManusDevice::ManusDevice(const std::string & name, const std::string & parentBodyName, const sva::PTransformd & X_p_f)
-: Device(name, parentBodyName, X_p_f), stop_capture_(false)
-{
-  type_ = "ManusDeviceSensor";
-}
-
-ManusDevice::~ManusDevice() noexcept
-{
-  stop_capture_ = true;
-  is_display_ = false;
-  if(capture_thread_.joinable())
+  namespace mc_rbdyn
   {
-    capture_thread_.join();
-  }
 
-  if(display_thread_.joinable())
+  namespace
   {
-    display_thread_.join();
-  }
-};
-
-ManusDevice::ManusDevice() : ManusDevice("", "", sva::PTransformd::Identity()) {}
-
-ManusDevice::ManusDevice(const ManusDevice & cd) : ManusDevice(cd.name(), cd.parentBody(), cd.X_p_f())
-{
-  id_ = cd.getManusId();
-
-  node_ = cd.node_;
-  it_ = std::make_shared<image_transport::ImageTransport>(node_);
-
-  if(cd.image_sub_.getTopic() != "")
+  inline sva::PTransformd toTransform(const geometry_msgs::msg::Pose & pose)
   {
-    image_sub_ = it_->subscribe(cd.image_sub_.getTopic(), 1,
-                                std::bind(&ManusDevice::imageCallback, this, std::placeholders::_1));
+    Eigen::Quaterniond q{pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z};
+    Eigen::Vector3d t{pose.position.x, pose.position.y, pose.position.z};
+    return sva::PTransformd{q.normalized().toRotationMatrix(), t};
   }
+  } // namespace
 
-ifdef WITH_ROS
-  node_ = cd.node_;
+  ManusDevice::ManusDevice() : ManusDevice("", "", sva::PTransformd::Identity()) {}
 
-
-  if(cd.cam_.isOpened())
-  {
-    cd.release();
-    open();
-  }
-
-  stop_capture_ = false;
-  is_display_ = false;
-  startCaptureThread();
-}
-
-ManusDevice::ManusDevice(const std::string & name,
+  ManusDevice::ManusDevice(const std::string & name,
                            const std::string & parentBodyName,
-                           const sva::PTransformd & X_p_f,
-                           int id)
-: ManusDevice(name, parentBodyName, X_p_f)
-{
-  id_ = id;
-  open();
-  startCaptureThread();
-}
-
-ManusDevice & ManusDevice::operator=(const ManusDevice & cd)
-{
-  if(&cd == this)
+                           const sva::PTransformd & X_p_f)
+  : Device(name, parentBodyName, X_p_f)
   {
+    type_ = "ManusGlove";
+  }
+
+  ManusDevice::ManusDevice(const ManusDevice & other) : ManusDevice(other.name(), other.parentBody(), other.X_p_f())
+  {
+    std::lock_guard<std::mutex> lock(other.dataMutex_);
+    data_ = other.data_;
+  #ifdef WITH_ROS
+    topic_ = other.topic_;
+    node_ = other.node_;
+    if(node_ && !topic_.empty())
+    {
+      sub_ = node_->create_subscription<manus_ros2::msg::ManusGlove>(
+          topic_, rclcpp::SensorDataQoS(), std::bind(&ManusDevice::gloveCallback, this, std::placeholders::_1));
+    }
+  #endif
+  }
+
+  ManusDevice & ManusDevice::operator=(const ManusDevice & other)
+  {
+    if(this == &other)
+    {
+      return *this;
+    }
+    name_ = other.name_;
+    parent_ = other.parent_;
+    X_p_s_ = other.X_p_f();
+    type_ = other.type_;
+    {
+      std::lock_guard<std::mutex> lock_other(other.dataMutex_);
+      std::lock_guard<std::mutex> lock_self(dataMutex_);
+      data_ = other.data_;
+    }
+  #ifdef WITH_ROS
+    topic_ = other.topic_;
+    node_ = other.node_;
+    if(node_ && !topic_.empty())
+    {
+      sub_ = node_->create_subscription<manus_ros2::msg::ManusGlove>(
+          topic_, rclcpp::SensorDataQoS(), std::bind(&ManusDevice::gloveCallback, this, std::placeholders::_1));
+    }
+    else
+    {
+      sub_.reset();
+    }
+  #endif
     return *this;
   }
-  name_ = cd.name_;
-  parent_ = cd.parent_;
-  X_p_s_ = cd.X_p_s_;
-  id_ = cd.id_;
-#ifdef WITH_ROS
-  node_ = cd.node_;
-  it_ = std::make_shared<image_transport::ImageTransport>(node_);
-  image_sub_ =
-      it_->subscribe(image_sub_.getTopic(), 1, std::bind(&ManusDevice::imageCallback, this, std::placeholders::_1));
-#endif
-  return *this;
-}
 
-DevicePtr ManusDevice::clone() const
-{
-  return DevicePtr(new ManusDevice(*this));
-}
-
-void ManusDevice::open()
-{
-  if(!cam_.open(id_))
+  Device::DevicePtr ManusDevice::clone() const
   {
-    mc_rtc::log::error_and_throw("[ManusPlugin::Manus] Manus {} cannot be openned with id: {}", name_, id_);
+    return Device::DevicePtr(new ManusDevice(*this));
   }
-}
 
-void ManusDevice::startCaptureThread()
-{
-  capture_thread_ = std::thread(
-      [this]
-      {
-        while(!stop_capture_)
-        {
-          capture();
-          std::this_thread::sleep_for(std::chrono::milliseconds(2));
-        }
-      });
-
-  display_thread_ = std::thread(
-      [this]
-      {
-        bool window_created = false;
-        is_display_ = false;
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
-
-        while(!stop_capture_)
-        {
-          if(is_display_)
-          {
-            if(!window_created)
-            {
-              cv::namedWindow(name(), cv::WINDOW_AUTOSIZE);
-              window_created = true;
-            }
-
-            auto & image = getImage();
-
-            if(!image.empty())
-            {
-              cv::imshow(name(), image);
-              cv::pollKey();
-            }
-          }
-          else
-          {
-            if(window_created)
-            {
-              cv::destroyWindow(name());
-              cv::waitKey(1);
-              window_created = false;
-            }
-          }
-        }
-      });
-}
-
-void ManusDevice::addToGUI(mc_rtc::gui::StateBuilder & gui)
-{
-  gui.addElement(
-      {"ManusPlugin"},
-      mc_rtc::gui::Checkbox("Display " + name(), [&]() { return is_display_; }, [&]() { is_display_ = !is_display_; }));
-}
-
-void ManusDevice::capture()
-{
-  const std::lock_guard<std::mutex> lock(image_mtx_);
-  if(cam_.isOpened())
+  const ManusDevice::Data ManusDevice::data() const
   {
-    cam_ >> image_;
+    std::lock_guard<std::mutex> lock(dataMutex_);
+    return data_;
   }
-}
 
-const cv::Mat & ManusDevice::getImage()
-{
-  const std::lock_guard<std::mutex> lock(image_mtx_);
-  return image_;
-}
+  void ManusDevice::addToGUI(mc_rtc::gui::StateBuilder & gui)
+  {
+    gui.addElement(
+        {"ManusPlugin", name()},
+        mc_rtc::gui::Label("Side", [this]() { return data().side; }),
+        mc_rtc::gui::Label("Raw nodes", [this]() { return std::to_string(data().rawNodes.size()); }),
+        mc_rtc::gui::Label("Ergonomics", [this]() { return std::to_string(data().ergonomics.size()); }));
+  }
 
-void ManusDevice::setImage(const cv::Mat & image)
-{
-  const std::lock_guard<std::mutex> lock(image_mtx_);
-  image_ = image;
-}
-
-void ManusDevice::release() const
-{
-  cam_.release();
-}
-
-#ifdef WITH_ROS
-ManusDevice::ManusDevice(const std::string & name,
+  #ifdef WITH_ROS
+  ManusDevice::ManusDevice(const std::string & name,
                            const std::string & parentBodyName,
                            const sva::PTransformd & X_p_f,
                            const std::string & topic,
-                           bool use_compressed,
-                           rclcpp::Node::SharedPtr & node)
-: ManusDevice(name, parentBodyName, X_p_f)
-{
-  id_ = -1;
-  node_ = node;
-  it_ = std::make_shared<image_transport::ImageTransport>(node_);
-
-  if(use_compressed)
+                           rclcpp::Node::SharedPtr node)
+  : ManusDevice(name, parentBodyName, X_p_f)
   {
-    image_transport::TransportHints hints(node_.get(), "compressed");
-    image_sub_ =
-        it_->subscribe(topic, 1, std::bind(&ManusDevice::imageCallback, this, std::placeholders::_1), nullptr, &hints);
-  }
-  else
-  {
-    image_sub_ = it_->subscribe(topic, 1, std::bind(&ManusDevice::imageCallback, this, std::placeholders::_1));
+    topic_ = topic;
+    node_ = std::move(node);
+    if(!node_)
+    {
+      mc_rtc::log::error_and_throw("[ManusDevice] Cannot create ROS subscription without a valid node");
+    }
+    sub_ = node_->create_subscription<manus_ros2::msg::ManusGlove>(
+        topic_, rclcpp::SensorDataQoS(), std::bind(&ManusDevice::gloveCallback, this, std::placeholders::_1));
   }
 
-  startCaptureThread();
-}
+  void ManusDevice::gloveCallback(const manus_ros2::msg::ManusGlove::SharedPtr msg)
+  {
+    Data sample;
+    sample.gloveId = msg->glove_id;
+    sample.side = msg->side;
+    sample.rawNodes.reserve(msg->raw_nodes.size());
+    for(const auto & node : msg->raw_nodes)
+    {
+      RawNode dst;
+      dst.nodeId = node.node_id;
+      dst.parentNodeId = node.parent_node_id;
+      dst.jointType = node.joint_type;
+      dst.chainType = node.chain_type;
+      dst.pose = toTransform(node.pose);
+      sample.rawNodes.push_back(std::move(dst));
+    }
+    sample.ergonomics.reserve(msg->ergonomics.size());
+    for(const auto & ergo : msg->ergonomics)
+    {
+      sample.ergonomics.push_back({ergo.type, static_cast<double>(ergo.value)});
+    }
+    if(msg->raw_sensor_count > 0)
+    {
+      sample.rawSensors.reserve(msg->raw_sensor.size());
+      for(size_t idx = 0; idx < msg->raw_sensor.size(); ++idx)
+      {
+        RawSensor rs;
+        rs.sensorId = static_cast<int>(idx);
+        rs.pose = toTransform(msg->raw_sensor[idx]);
+        sample.rawSensors.push_back(std::move(rs));
+      }
+      sample.wristOrientation = Eigen::Quaterniond(msg->raw_sensor_orientation.w, msg->raw_sensor_orientation.x,
+                                                   msg->raw_sensor_orientation.y, msg->raw_sensor_orientation.z);
+    }
+    sample.stamp = std::chrono::steady_clock::now();
 
-void ManusDevice::imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr & msg)
-{
-  const std::lock_guard<std::mutex> lock(image_mtx_);
-  image_ = cv_bridge::toCvShare(msg, "bgr8")->image.clone();
-}
-#endif
+    std::lock_guard<std::mutex> lock(dataMutex_);
+    data_ = std::move(sample);
+  }
+  #endif
 
-} // namespace mc_rbdyn
+  } // namespace mc_rbdyn
