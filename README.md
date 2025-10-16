@@ -1,6 +1,6 @@
 # mc_manus_plugin
 
-This plugin gets the data of the [Manus gloves](https://www.manus-meta.com/products/quantum-metagloves) using the tools of Manus gloves for the C++ SDK of Linux you could look the documentation in the official [web site](https://docs.manus-meta.com/3.0.0/Plugins/SDK/Linux/), it get the ros topics inside of the controller easily. 
+This plugin gets the data of the [Manus gloves](https://www.manus-meta.com/products/quantum-metagloves) using the tools of Manus gloves for the C++ SDK of Linux you could look the documentation in the official [web site](https://docs.manus-meta.com/3.0.0/Plugins/SDK/Linux/), it get the ros topics inside of the controller easily.
 
 
 
@@ -16,7 +16,7 @@ This plugin gets the data of the [Manus gloves](https://www.manus-meta.com/produ
 sudo apt-get update && sudo apt-get install -y build-essential git libtool libzmq3-dev libusb-1.0-0-dev zlib1g-dev libudev-dev gdb libncurses5-dev && sudo apt-get clean
 ```
 
-#### Clone the GRPC repository and all its submodules from GitHub to your local machine using the following command: 
+#### Clone the GRPC repository and all its submodules from GitHub to your local machine using the following command:
 ```bash
 sudo git clone -b v1.28.1 https://github.com/grpc/grpc /var/local/git/grpc && cd /var/local/git/grpc && sudo git submodule update --init --recursive
 ```
@@ -30,7 +30,7 @@ cd /var/local/git/grpc/third_party/protobuf && sudo ./autogen.sh && sudo ./confi
 cd /var/local/git/grpc && sudo make -j$(nproc) && sudo make install && sudo make clean && sudo ldconfig
 ```
 
-#### Core Integrated 
+#### Core Integrated
 ```bash
 sudo apt-get update && sudo apt-get install -y build-essential libusb-1.0-0-dev zlib1g-dev libudev-dev gdb libncurses5-dev && sudo apt-get clean
 ```
@@ -48,7 +48,7 @@ SUBSYSTEMS=="usb", ATTRS{idVendor}=="1915", ATTRS{idProduct}=="83fd", MODE:="066
 KERNEL=="hidraw*", ATTRS{idVendor}=="3325", MODE:="0666"
 ```
 
-#### Install the packages of manus 
+#### Install the packages of manus
 
 To use the Manus Core 3 you need to download the [MANUS Core 3 SDK (including ROS2 Package)](https://docs.manus-meta.com/latest/Resources/)
 
@@ -56,14 +56,14 @@ And you have to click in this option:
 ![MANUS Core 3 SDK including ROS2 Package](images/manusDownload.png)
 
 This will give you a .zip that you will have to put in your workspace.
-The File that you have to focus on is, SDKClient_Linux 
+The File that you have to focus on is, SDKClient_Linux
 
 
 
 #### Docker
 
 
-Instead of setting up a linux machine, you can also use docker to set up your development environment. Dockerfiles for both **integrated** and **remote**. For this implementation you should use the **integrated** mode, so you could have everything in linux environment. 
+Instead of setting up a linux machine, you can also use docker to set up your development environment. Dockerfiles for both **integrated** and **remote**. For this implementation you should use the **integrated** mode, so you could have everything in linux environment.
 
 #### Build integrated docker image
 ```bash
@@ -110,7 +110,7 @@ make all
 
 In order to use this plugin, please consider adding the following line to your configuration file (`~/.config/mc_rtc/mc_rtc.yaml`).
 
-Also you need to run the 
+Also you need to run the
 
 ```yaml
 Plugins: [ManusPlugin]
@@ -118,27 +118,30 @@ Plugins: [ManusPlugin]
 
 After following the instructions for USB or ROS, you can run your controller. A new table `ManusPlugin` should appear in `mc_rtc_panel`.
 
-### USB
-
-To get the manus stream you need to add this command line, to your (etc/ManusPlugin.yaml)
-
 
 ```bash
 ---
 ManusPlugin:
   - name: "right_hand"
-    parent: "tool0
     topic: "/manus_glove_0"
-    manusTransform:
-      translation: [0, 0, 0]
-      rotation: [0, 0, 0]
 
   - name: "left_hand"
-    parent: "tool0"
     topic: "/manus_glove_1"
+```
+
+## Get the information
+
+To get the device info please consider adding the following line to your controller :
+
+```cpp
+if(gc.controller().robot().hasDevice<mc_rbdyn::ManusDevice>("leaf_hand"))
+    {
+      auto & manus_glove = gc.controller().robot().device<mc_rbdyn::ManusDevice>("left_hand");
+      const auto & manus_info = manus_glove.data();
+      std::cout << manus_info.gloveId << std::endl;
+    }
 ```
 
   Each entry creates an mc_rbdyn::ManusDevice attached to parent. Run your controller and a ManusPlugin tab will appear in mc_rtc_panel.
 
 > **Please note that you can set multiple manuss (e.g. `/etc/ManusPlugin.yaml`)**
-

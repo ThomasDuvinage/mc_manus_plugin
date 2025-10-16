@@ -1,4 +1,5 @@
 #include <mc_control/mc_global_controller.h>
+#include <mc_manus/ManusDevice.h>
 
 int main(int argc, char * argv[])
 {
@@ -42,6 +43,13 @@ int main(int argc, char * argv[])
     {
       gc.setSensorPositions({{"FloatingBase", robot.posW().translation()}});
       gc.setSensorOrientations({{"FloatingBase", Eigen::Quaterniond{robot.posW().rotation()}}});
+    }
+
+    if(gc.controller().robot().hasDevice<mc_rbdyn::ManusDevice>("leaf_hand"))
+    {
+      auto & manus_glove = gc.controller().robot().device<mc_rbdyn::ManusDevice>("left_hand");
+      const auto & manus_info = manus_glove.data();
+      std::cout << manus_info.gloveId << std::endl;
     }
   };
 
