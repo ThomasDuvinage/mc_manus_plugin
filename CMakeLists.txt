@@ -8,51 +8,25 @@ project(
 include(CTest)
 enable_testing()
 
-option(WITH_ROS "Enable ROS communication" ON)
-
 if(NOT TARGET mc_rtc::mc_control)
   find_package(mc_rtc REQUIRED)
 endif()
 
-if(WITH_ROS)
-  find_package(rclcpp REQUIRED)
-  find_package(manus_ros2_msgs REQUIRED)
-  find_package(geometry_msgs REQUIRED)
-
-  target_compile_definitions(mc_manus PRIVATE WITH_ROS)
-  ament_target_dependencies(mc_manus rclcpp manus_ros2_msgs geometry_msgs)
-endif()
-
+find_package(manus_ros2_msgs REQUIRED)
 
 add_library(mc_manus SHARED src/ManusDevice.cpp src/ManusDevice.h)
-target_link_libraries(mc_manus PUBLIC mc_rtc::mc_rbdyn)
+target_link_libraries(mc_manus PUBLIC mc_rtc::mc_rbdyn mc_rtc::mc_rtc_ros)
+ament_target_dependencies(mc_manus PUBLIC manus_ros2_msgs)
 
-if(WITH_ROS)
-  target_compile_definitions(mc_manus PRIVATE WITH_ROS)
-  ament_target_dependencies(mc_manus rclcpp manus_ros2) # adapt if different targets are exported
-endif()
-
-
-set(MC_CAMERA_EXPORT_NAME mc_manus)
+set(MC_MANUS_EXPORT_NAME mc_manus)
 install(
   TARGETS mc_manus
-  EXPORT ${MC_CAMERA_EXPORT_NAME}Targets
+  EXPORT ${MC_MANUS_EXPORT_NAME}Targets
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
 
 install(FILES src/ManusDevice.h DESTINATION include/mc_manus)
-
-if(WITH_ROS)
-  set(ROS_DEPENDENCIES
-      [[
-find_dependency(cv_bridge)
-find_dependency(image_transport)
-find_dependency(sensor_msgs)
-]])
-else()
-  set(ROS_DEPENDENCIES "")
-endif()
 
 # Generate and install CMake package config files
 include(CMakePackageConfigHelpers)
@@ -62,8 +36,8 @@ write_basic_package_version_file(
   COMPATIBILITY AnyNewerVersion)
 
 install(
-  EXPORT ${MC_CAMERA_EXPORT_NAME}Targets
-  FILE ${MC_CAMERA_EXPORT_NAME}Targets.cmake
+  EXPORT ${MC_MANUS_EXPORT_NAME}Targets
+  FILE ${MC_MANUS_EXPORT_NAME}Targets.cmake
   NAMESPACE mc_rbdyn::
   DESTINATION lib/cmake/mc_manus)
 
@@ -87,11 +61,6 @@ set(plugin_HDR src/ManusPlugin.h)
 # The add_plugin macro is provided by mc_rtc
 add_plugin(ManusPlugin "${plugin_SRC}" "${plugin_HDR}")
 target_link_libraries(ManusPlugin PUBLIC mc_manus)
-
-if(WITH_ROS)
-  target_compile_definitions(ManusPlugin PRIVATE WITH_ROS)
-
-endif()
 
 if(BUILD_TESTING)
   add_subdirectory(tests)

@@ -12,7 +12,7 @@ if(MSVC AND _VCPKG_INSTALLED_DIR)
 endif()
 
 add_executable(test_controller main.cpp)
-target_link_libraries(test_controller PUBLIC mc_rtc::mc_control)
+target_link_libraries(test_controller PUBLIC mc_rtc::mc_control mc_manus)
 add_test(NAME test_controller
          COMMAND test_controller
                  "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/etc/mc_rtc.yaml")

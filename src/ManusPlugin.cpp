@@ -7,18 +7,10 @@ namespace mc_plugin
 
 ManusPlugin::~ManusPlugin()
 {
-#ifdef WITH_ROS
   executor_->cancel();
-  if(ros_spin_thread_.joinable())
+  if(rosSpinThread_.joinable())
   {
-    ros_spin_thread_.join();
-  }
-#endif
-
-  stop_capture_ = true;
-  if(capture_thread_.joinable())
-  {
-    capture_thread_.join();
+    rosSpinThread_.join();
   }
 };
 
@@ -36,12 +28,10 @@ void ManusPlugin::reset(mc_control::MCGlobalController & controller)
   manuss_.clear();
   deviceNames_.clear();
 
-#ifdef WITH_ROS
   node_ = rclcpp::Node::make_shared("ManusPlugin");
   executor_ = rclcpp::executors::MultiThreadedExecutor::make_shared();
   executor_->add_node(node_);
   rosSpinThread_ = std::thread([&]() { executor_->spin(); });
-#endif
 
   if(!manusConfig)
   {
@@ -52,18 +42,12 @@ void ManusPlugin::reset(mc_control::MCGlobalController & controller)
   for(const auto & entry : *manusConfig)
   {
     const std::string name = entry("name");
-    const std::string parent = entry("parent");
-    sva::PTransformd transform = entry.has("manusTransform") ? entry("manusTransform") : sva::PTransformd::Identity();
 
     if(entry.has("topic"))
     {
-#ifdef WITH_ROS
       const std::string topic = entry("topic");
-      manuss_.push_back(std::make_unique<mc_rbdyn::ManusDevice>(name, parent, transform, topic, node_));
+      manuss_.push_back(std::make_unique<mc_rbdyn::ManusDevice>(name, topic, node_));
       mc_rtc::log::info("[ManusPlugin] Subscribed {} to {}", name, topic);
-#else
-      mc_rtc::log::error_and_throw("[ManusPlugin] ROS support disabled: cannot subscribe to topic for {}", name);
-#endif
     }
     else
     {
@@ -83,24 +67,9 @@ void ManusPlugin::reset(mc_control::MCGlobalController & controller)
     }
     deviceNames_.push_back(gloveName);
   }
-
-  for(const auto & gloveName : deviceNames_)
-  {
-    controller.datastore().make<mc_rbdyn::ManusDevice::Data>(
-        "manus/" + gloveName,
-        controller.robot().device<mc_rbdyn::ManusDevice>(gloveName).data());
-  }
 }
 
-void ManusPlugin::before(mc_control::MCGlobalController & controller)
-{
-  for(const auto & gloveName : deviceNames_)
-  {
-    auto & device = controller.robot().device<mc_rbdyn::ManusDevice>(gloveName);
-    controller.datastore().assign("manus/" + gloveName, device.data());
-  }
-}
-
+void ManusPlugin::before(mc_control::MCGlobalController & controller) {}
 
 mc_control::GlobalPlugin::GlobalPluginConfiguration ManusPlugin::configuration()
 {
