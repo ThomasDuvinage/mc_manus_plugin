@@ -1,4 +1,4 @@
-#include "ManusDevice.h"
+#include <mc_manus/ManusDevice.h>
 
 #include <mc_rtc/gui/Label.h>
 

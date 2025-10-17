@@ -14,7 +14,11 @@ endif()
 
 find_package(manus_ros2_msgs REQUIRED)
 
-add_library(mc_manus SHARED src/ManusDevice.cpp src/ManusDevice.h)
+add_library(mc_manus SHARED src/ManusDevice.cpp)
+target_include_directories(
+  mc_manus
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+         $<INSTALL_INTERFACE:include/mc_manus>)
 target_link_libraries(mc_manus PUBLIC mc_rtc::mc_rbdyn mc_rtc::mc_rtc_ros)
 ament_target_dependencies(mc_manus PUBLIC manus_ros2_msgs)
 
@@ -26,7 +30,7 @@ install(
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
 
-install(FILES src/ManusDevice.h DESTINATION include/mc_manus)
+install(FILES include/mc_manus/ManusDevice.h DESTINATION include/mc_manus)
 
 # Generate and install CMake package config files
 include(CMakePackageConfigHelpers)
