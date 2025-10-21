@@ -6,7 +6,7 @@
 
 #include <mc_control/GlobalPlugin.h>
 #include <mc_rtc/Configuration.h>
-#include <mc_manus/ManusDevice.h>
+#include "ManusDevice.h"
 
 #include <rclcpp/rclcpp.hpp>
 
