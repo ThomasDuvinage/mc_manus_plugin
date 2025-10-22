@@ -8,6 +8,7 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <manus_ros2_msgs/msg/manus_glove.hpp>
@@ -47,6 +48,7 @@ struct ManusDevice : public Device
     std::vector<Ergonomics> ergonomics;
     std::optional<Eigen::Quaterniond> wristOrientation;
     std::vector<RawSensor> rawSensors;
+    std::unordered_map<std::string, RawNode> finger;
     std::chrono::steady_clock::time_point stamp{};
   };
 

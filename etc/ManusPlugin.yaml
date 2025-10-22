@@ -2,7 +2,8 @@
 ManusPlugin:
   - name: "right_hand"
     topic: "/manus_glove_0"
-
+    
 
   - name: "left_hand"
     topic: "/manus_glove_1"
+

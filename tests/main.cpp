@@ -51,6 +51,7 @@ int main(int argc, char * argv[])
       const auto & manus_info = manus_glove.data();
       std::cout << manus_info.gloveId << std::endl;
     }
+    
   };
 
   gc.setEncoderValues(qEnc);

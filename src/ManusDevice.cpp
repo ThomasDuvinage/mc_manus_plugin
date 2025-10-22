@@ -92,6 +92,24 @@ void ManusDevice::addToGUI(mc_rtc::gui::StateBuilder & gui)
   gui.addElement({"ManusPlugin", name()}, mc_rtc::gui::Label("Side", [this]() { return data().side; }),
                  mc_rtc::gui::Label("Raw nodes", [this]() { return std::to_string(data().rawNodes.size()); }),
                  mc_rtc::gui::Label("Ergonomics", [this]() { return std::to_string(data().ergonomics.size()); }));
+  gui.addElement({"ManusPlugin", name(), "Data"},
+                 mc_rtc::gui::Table("Raw Nodes", {"Node ID", "Pose"},
+                                    [this]()
+                                    {
+                                      const auto & d = data();
+                                      std::vector<std::tuple<int, std::string, std::string>> table;
+                                      for(const auto & node : d.rawNodes)
+                                      {
+                                        table.push_back({node.nodeId, node.chainType, fmt::format("{:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}",
+                                                                 node.pose.translation().x(),
+                                                                 node.pose.translation().y(),
+                                                                 node.pose.translation().z(),
+                                                                 node.pose.rotation().eulerAngles(0, 1, 2).x(),
+                                                                 node.pose.rotation().eulerAngles(0, 1, 2).y(),
+                                                                 node.pose.rotation().eulerAngles(0, 1, 2).z())});
+                                      }
+                                      return table;
+                                    }));
 }
 
 void ManusDevice::gloveCallback(const manus_ros2_msgs::msg::ManusGlove::SharedPtr msg)
