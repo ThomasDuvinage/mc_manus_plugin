@@ -45,7 +45,7 @@ int main(int argc, char * argv[])
       gc.setSensorOrientations({{"FloatingBase", Eigen::Quaterniond{robot.posW().rotation()}}});
     }
 
-    if(gc.controller().robot().hasDevice<mc_rbdyn::ManusDevice>("leaf_hand"))
+    if(gc.controller().robot().hasDevice<mc_rbdyn::ManusDevice>("left_hand"))
     {
       auto & manus_glove = gc.controller().robot().device<mc_rbdyn::ManusDevice>("left_hand");
       const auto & manus_info = manus_glove.data();
