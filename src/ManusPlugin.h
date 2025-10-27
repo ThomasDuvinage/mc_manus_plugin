@@ -27,8 +27,6 @@ private:
   rclcpp::Node::SharedPtr node_;
   std::thread rosSpinThread_;
 
-  std::vector<std::unique_ptr<mc_rbdyn::ManusDevice>> manuss_;
-  std::vector<std::string> deviceNames_;
   mc_rtc::Configuration config_;
 };
 

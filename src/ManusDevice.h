@@ -48,7 +48,7 @@ struct ManusDevice : public Device
     std::vector<Ergonomics> ergonomics;
     std::optional<Eigen::Quaterniond> wristOrientation;
     std::vector<RawSensor> rawSensors;
-    std::unordered_map<std::string, RawNode> finger;
+    std::unordered_map<std::string, std::vector<Ergonomics>> fingers;
     std::chrono::steady_clock::time_point stamp{};
   };
 
@@ -62,7 +62,7 @@ struct ManusDevice : public Device
 
   ManusDevice(const std::string & name);
 
-  ManusDevice(const std::string & name, const std::string & topic, rclcpp::Node::SharedPtr node);
+  ManusDevice(const std::string & name, const std::string & topic, rclcpp::Node::SharedPtr & node);
 
   DevicePtr clone() const override;
 

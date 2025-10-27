@@ -7,12 +7,16 @@ namespace mc_plugin
 
 ManusPlugin::~ManusPlugin()
 {
-  executor_->cancel();
+  if(executor_)
+  {
+    executor_->cancel();
+  }
   if(rosSpinThread_.joinable())
   {
     rosSpinThread_.join();
   }
-};
+  executor_.reset();
+}
 
 void ManusPlugin::init(mc_control::MCGlobalController & controller, const mc_rtc::Configuration & config)
 {
@@ -25,8 +29,6 @@ void ManusPlugin::after(mc_control::MCGlobalController & controller) {}
 void ManusPlugin::reset(mc_control::MCGlobalController & controller)
 {
   auto manusConfig = config_.find("ManusPlugin");
-  manuss_.clear();
-  deviceNames_.clear();
 
   node_ = rclcpp::Node::make_shared("ManusPlugin");
   executor_ = rclcpp::executors::MultiThreadedExecutor::make_shared();
@@ -46,26 +48,22 @@ void ManusPlugin::reset(mc_control::MCGlobalController & controller)
     if(entry.has("topic"))
     {
       const std::string topic = entry("topic");
-      manuss_.push_back(std::make_unique<mc_rbdyn::ManusDevice>(name, topic, node_));
+      auto manus = std::make_unique<mc_rbdyn::ManusDevice>(name, topic, node_);
+
+      if(!controller.robot().hasDevice<mc_rbdyn::ManusDevice>(name))
+      {
+        controller.robot().addDevice(std::move(manus));
+        controller.robot()
+            .device<mc_rbdyn::ManusDevice>(controller.robot().devices().back()->name())
+            .addToGUI(*controller.controller().gui());
+      }
+
       mc_rtc::log::info("[ManusPlugin] Subscribed {} to {}", name, topic);
     }
     else
     {
       mc_rtc::log::error_and_throw("[ManusPlugin] Missing \"topic\" for Manus device {}", name);
     }
-  }
-
-  for(auto & glove : manuss_)
-  {
-    const std::string gloveName = glove->name();
-    if(!controller.robot().hasDevice<mc_rbdyn::ManusDevice>(gloveName))
-    {
-      controller.robot().addDevice(std::move(glove));
-      controller.robot()
-          .device<mc_rbdyn::ManusDevice>(controller.robot().devices().back()->name())
-          .addToGUI(*controller.controller().gui());
-    }
-    deviceNames_.push_back(gloveName);
   }
 }
 

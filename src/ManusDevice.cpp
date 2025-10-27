@@ -33,11 +33,11 @@ ManusDevice::ManusDevice(const ManusDevice & other) : ManusDevice(other.name())
   }
 }
 
-ManusDevice::ManusDevice(const std::string & name, const std::string & topic, rclcpp::Node::SharedPtr node)
+ManusDevice::ManusDevice(const std::string & name, const std::string & topic, rclcpp::Node::SharedPtr & node)
 : ManusDevice(name)
 {
   topic_ = topic;
-  node_ = std::move(node);
+  node_ = node;
   if(!node_)
   {
     mc_rtc::log::error_and_throw("[ManusDevice] Cannot create ROS subscription without a valid node");
@@ -100,13 +100,29 @@ void ManusDevice::addToGUI(mc_rtc::gui::StateBuilder & gui)
                                       std::vector<std::tuple<int, std::string, std::string>> table;
                                       for(const auto & node : d.rawNodes)
                                       {
-                                        table.push_back({node.nodeId, node.chainType, fmt::format("{:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}",
-                                                                 node.pose.translation().x(),
-                                                                 node.pose.translation().y(),
-                                                                 node.pose.translation().z(),
-                                                                 node.pose.rotation().eulerAngles(0, 1, 2).x(),
-                                                                 node.pose.rotation().eulerAngles(0, 1, 2).y(),
-                                                                 node.pose.rotation().eulerAngles(0, 1, 2).z())});
+                                        table.push_back(
+                                            {node.nodeId, node.chainType,
+                                             fmt::format("{:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}",
+                                                         node.pose.translation().x(), node.pose.translation().y(),
+                                                         node.pose.translation().z(),
+                                                         node.pose.rotation().eulerAngles(0, 1, 2).x(),
+                                                         node.pose.rotation().eulerAngles(0, 1, 2).y(),
+                                                         node.pose.rotation().eulerAngles(0, 1, 2).z())});
+                                      }
+                                      return table;
+                                    }));
+
+  gui.addElement({"ManusPlugin", name(), "DataErgonomics"},
+                 mc_rtc::gui::Table("Ergonomics", {"Finger", "Flange", "Value"},
+                                    [this]()
+                                    {
+                                      const auto & d = data();
+                                      std::vector<std::tuple<std::string, std::string, std::string>> table;
+                                      table.reserve(d.ergonomics.size());
+                                      for(const auto & node : d.fingers)
+                                      {
+                                        for(const auto & f : node.second)
+                                          table.emplace_back(node.first, f.type, fmt::format("{:.2f}", f.value));
                                       }
                                       return table;
                                     }));
@@ -118,8 +134,9 @@ void ManusDevice::gloveCallback(const manus_ros2_msgs::msg::ManusGlove::SharedPt
   sample.gloveId = msg->glove_id;
   sample.side = msg->side;
   sample.rawNodes.reserve(msg->raw_nodes.size());
-  for(const auto & node : msg->raw_nodes)
+  for(size_t i = 0; i < msg->raw_nodes.size(); ++i)
   {
+    const auto & node = msg->raw_nodes[i];
     RawNode dst;
     dst.nodeId = node.node_id;
     dst.parentNodeId = node.parent_node_id;
@@ -127,11 +144,18 @@ void ManusDevice::gloveCallback(const manus_ros2_msgs::msg::ManusGlove::SharedPt
     dst.chainType = node.chain_type;
     dst.pose = toTransform(node.pose);
     sample.rawNodes.push_back(std::move(dst));
+    sample.fingers[node.chain_type].reserve(10);
+
+    if(i < msg->ergonomics.size())
+    {
+      const auto & ergo = msg->ergonomics[i];
+      sample.fingers[node.chain_type].push_back({ergo.type, ergo.value});
+    }
   }
   sample.ergonomics.reserve(msg->ergonomics.size());
   for(const auto & ergo : msg->ergonomics)
   {
-    sample.ergonomics.push_back({ergo.type, static_cast<double>(ergo.value)});
+    sample.ergonomics.push_back({ergo.type, ergo.value});
   }
   if(msg->raw_sensor_count > 0)
   {
